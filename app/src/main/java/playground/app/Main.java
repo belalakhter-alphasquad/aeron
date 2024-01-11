@@ -1,4 +1,4 @@
-package playground.sbePlay;
+package playground.app;
 
 import org.agrona.MutableDirectBuffer;
 

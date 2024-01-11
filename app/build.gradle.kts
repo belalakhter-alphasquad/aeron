@@ -22,8 +22,8 @@ sourceSets {
 
 tasks.register("generateCodecs", JavaExec::class) {
     group = "sbe"
-    val codecsFile = "src/main/java/playground/sbePlay/sbe/protocol-codecs.xml"
-    val sbeFile = "src/main/java/playground/sbePlay/sbe/sbe.xsd"
+    val codecsFile = "src/main/java/playground/app/sbe/protocol-codecs.xml"
+    val sbeFile = "src/main/java/playground/app/sbe/sbe.xsd"
     inputs.files(codecsFile, sbeFile)
     outputs.dir(generatedDir)
     classpath = codecGeneration

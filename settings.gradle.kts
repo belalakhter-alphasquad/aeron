@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "Playground"
-include("sbePlay")
+include("app")

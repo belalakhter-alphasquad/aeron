@@ -27,4 +27,6 @@ desktop.ini
 .gitignore.local
 .gitconfig.local
 
-/sbePlay/build/
+/app/build/
+
+.gradle
