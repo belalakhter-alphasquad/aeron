@@ -1,6 +1,11 @@
 plugins {
     java 
+    application
 }
+application {
+    mainClass.set("playground.app.Main") 
+}
+
 
 repositories {
     mavenCentral()
@@ -12,13 +17,20 @@ val codecGeneration = configurations.create("codecGeneration")
 dependencies {
     "codecGeneration"("uk.co.real-logic:sbe-tool:1.29.0")
     implementation("org.agrona:agrona:1.20.0")
+    implementation("io.aeron:aeron-cluster:1.43.0")
+    implementation("io.aeron:aeron-driver:1.43.0")
+   
 }
+
 
 sourceSets {
     main {
-        java.srcDir(generatedDir)
+        java {
+            srcDir(generatedDir)
+        }
     }
 }
+
 
 tasks.register("generateCodecs", JavaExec::class) {
     group = "sbe"
@@ -37,4 +49,31 @@ tasks.register("generateCodecs", JavaExec::class) {
 }
 
 
-tasks.getByName("build").dependsOn("generateCodecs")
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes(
+            "Main-Class" to "playground.app.Main",
+            "Implementation-Title" to "Bilal's Playground",
+            "Implementation-Version" to project.version
+        )
+    }
+    archiveBaseName.set("bilals-playground")
+    archiveVersion.set("1.0.0")
+    from(sourceSets.main.get().output)
+
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+}
+
+
+
+
+ 
+tasks.named<JavaCompile>("compileJava") {
+    dependsOn("generateCodecs")
+}
+
+tasks.named("build") {
+    dependsOn("generateCodecs")
+    dependsOn("jar")
+}
+
