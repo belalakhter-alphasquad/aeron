@@ -15,6 +15,16 @@ public class Main {
                 finalClusterClient.close();
             }));
 
+            try {
+                Thread.sleep(5000);
+                SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
+                boolean messageSent = sendMessages.sendCustomMessage();
+                System.out.println("Custom message sent: " + messageSent);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

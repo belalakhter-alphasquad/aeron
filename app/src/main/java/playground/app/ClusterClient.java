@@ -15,6 +15,7 @@ public class ClusterClient implements AutoCloseable {
     private final AeronCluster aeronCluster;
 
     public ClusterClient() {
+
         mediaDriver = MediaDriver.launchEmbedded(new MediaDriver.Context()
                 .threadingMode(ThreadingMode.SHARED)
                 .dirDeleteOnStart(true)
@@ -33,6 +34,7 @@ public class ClusterClient implements AutoCloseable {
     }
 
     public AeronCluster getAeronCluster() {
+
         return aeronCluster;
     }
 
