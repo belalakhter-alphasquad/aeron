@@ -1,7 +1,7 @@
 plugins {
-    java 
     application
 }
+
 application {
     mainClass.set("playground.app.Main") 
 }
@@ -19,7 +19,7 @@ dependencies {
     implementation("org.agrona:agrona:1.20.0")
     implementation("io.aeron:aeron-cluster:1.43.0")
     implementation("io.aeron:aeron-driver:1.43.0")
-   
+    implementation("io.aeron:aeron-samples:1.43.0")   
 }
 
 
