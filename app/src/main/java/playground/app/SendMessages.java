@@ -15,11 +15,11 @@ public class SendMessages {
       }
 
       public boolean sendCustomMessage() {
-            UnsafeBuffer buffer = new UnsafeBuffer(BufferUtil.allocateDirectAligned(256, 64));
+            UnsafeBuffer buffer = new UnsafeBuffer(BufferUtil.allocateDirectAligned(25, 64));
 
             SimpleMessageEncoder messageEncoder = new SimpleMessageEncoder();
             MessageHeaderEncoder headerEncoder = new MessageHeaderEncoder();
-            String messageContent = "Your message here";
+            String messageContent = "Y";
             messageEncoder.wrapAndApplyHeader(buffer, 0, headerEncoder)
                         .content(messageContent);
 
