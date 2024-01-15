@@ -7,14 +7,16 @@ public class Main {
         try {
             clusterClient = new ClusterClient();
             System.out.println("Cluster connection succeeded!");
+            clusterClient.sendKeepAlive();
+            final ClusterClient finalClusterClient = clusterClient;
 
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println(" Closing cluster client...");
+                finalClusterClient.close();
+            }));
+
+        } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (clusterClient != null) {
-                clusterClient.close();
-            }
         }
     }
 }
