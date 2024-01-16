@@ -6,7 +6,7 @@ public class Main {
 
         try {
             clusterClient = new ClusterClient();
-            System.out.println("Cluster connection succeeded!");
+
             clusterClient.sendKeepAlive();
             final ClusterClient finalClusterClient = clusterClient;
 
@@ -18,7 +18,7 @@ public class Main {
             try {
                 Thread.sleep(5000);
                 SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
-                boolean messageSent = sendMessages.sendCustomMessage();
+                String messageSent = sendMessages.sendCustomMessage();
                 System.out.println("Custom message sent: " + messageSent);
 
             } catch (InterruptedException e) {

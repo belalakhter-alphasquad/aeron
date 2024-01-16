@@ -3,6 +3,7 @@ package playground.app;
 import io.aeron.cluster.client.AeronCluster;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,6 +14,10 @@ public class ClusterClient implements AutoCloseable {
 
     private final MediaDriver mediaDriver;
     private final AeronCluster aeronCluster;
+
+    private void logError(final Throwable throwable) {
+        System.out.println("Error: " + throwable.getMessage());
+    }
 
     public ClusterClient() {
 
@@ -29,8 +34,11 @@ public class ClusterClient implements AutoCloseable {
                 new AeronCluster.Context()
                         .egressChannel("aeron:udp?endpoint=localhost:0")
                         .aeronDirectoryName(mediaDriver.aeronDirectoryName())
-                        .ingressChannel("aeron:udp")
+                        .errorHandler(this::logError)
+                        .ingressChannel("aeron:udp?term-length=64k")
                         .ingressEndpoints(ingressEndpoints));
+        System.out.println("Cluster connection succeeded!" + " Leader is node " + aeronCluster.leaderMemberId() + "\n");
+
     }
 
     public AeronCluster getAeronCluster() {
