@@ -21,7 +21,6 @@ public class SendMessages {
 
       public String sendCustomMessage() {
             final String correlationId = UUID.randomUUID().toString();
-
             clientSaysHelloCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
             clientSaysHelloCommandEncoder.correlationId(correlationId);
             clientSaysHelloCommandEncoder.clientName("Bilal");
@@ -37,25 +36,4 @@ public class SendMessages {
             }
       }
 
-      /*
-       * public boolean sendCustomMessage() {
-       * UnsafeBuffer buffer = new UnsafeBuffer(BufferUtil.allocateDirectAligned(25,
-       * 64));
-       * 
-       * SimpleMessageEncoder messageEncoder = new SimpleMessageEncoder();
-       * MessageHeaderEncoder headerEncoder = new MessageHeaderEncoder();
-       * String messageContent = "Y";
-       * messageEncoder.wrapAndApplyHeader(buffer, 0, headerEncoder)
-       * .content(messageContent);
-       * 
-       * long result = aeronCluster.offer(buffer, 0, messageEncoder.encodedLength());
-       * if (result >= 0) {
-       * System.out.println("Message sent successfully");
-       * return true;
-       * } else {
-       * System.out.println("Failed to send message, result: " + result);
-       * return false;
-       * }
-       * }
-       */
 }

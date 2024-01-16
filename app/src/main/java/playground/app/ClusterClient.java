@@ -54,6 +54,9 @@ public class ClusterClient implements AutoCloseable {
                 return;
             }
             aeronCluster.sendKeepAlive();
+            if (null != aeronCluster && !aeronCluster.isClosed()) {
+                aeronCluster.pollEgress();
+            }
         }
     }
 
