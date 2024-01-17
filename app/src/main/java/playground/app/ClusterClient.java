@@ -12,12 +12,14 @@ import java.util.List;
 public class ClusterClient implements AutoCloseable {
 
     private static final long HEARTBEAT_INTERVAL_MS = 250;
-    private long lastHeartbeatTime = 0;
 
     private final MediaDriver mediaDriver;
     private final AeronCluster aeronCluster;
+    private Thread pollingThread;
+    private volatile boolean running = true;
 
     public ClusterClient() {
+
         final int port = Enviromental.tryGetResponsePortFromEnv();
         final String userhost = Enviromental.getThisHostName();
 
@@ -37,7 +39,6 @@ public class ClusterClient implements AutoCloseable {
                         .ingressChannel("aeron:udp?term-length=64k")
                         .ingressEndpoints(ingressEndpoints));
         System.out.println("Cluster connection succeeded!" + " Leader is node " + aeronCluster.leaderMemberId() + "\n");
-
     }
 
     public AeronCluster getAeronCluster() {
@@ -45,22 +46,35 @@ public class ClusterClient implements AutoCloseable {
         return aeronCluster;
     }
 
-    public void sendKeepAlive() {
-        final long now = System.currentTimeMillis();
-        if (now >= (lastHeartbeatTime + HEARTBEAT_INTERVAL_MS)) {
-            lastHeartbeatTime = now;
-            if (aeronCluster.isClosed()) {
-                return;
-            }
-            aeronCluster.sendKeepAlive();
-            if (null != aeronCluster && !aeronCluster.isClosed()) {
+    public void makeClusterAlive() {
+        pollingThread = new Thread(() -> {
+            while (running && !aeronCluster.isClosed()) {
+                aeronCluster.sendKeepAlive();
                 aeronCluster.pollEgress();
+                try {
+                    Thread.sleep(HEARTBEAT_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    System.out.println("Cluster connection is closed \n");
+                }
             }
-        }
+        });
+
+        pollingThread.start();
     }
 
     @Override
     public void close() {
+        running = false;
+        if (pollingThread != null) {
+            pollingThread.interrupt();
+            try {
+                pollingThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Interrupted closing the connection \n");
+            }
+        }
         aeronCluster.close();
         mediaDriver.close();
     }

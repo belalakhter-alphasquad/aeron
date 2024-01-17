@@ -2,24 +2,22 @@ package playground.app;
 
 public class Main {
     public static void main(final String[] args) {
-        ClusterClient clusterClient = null;
 
         try {
-            clusterClient = new ClusterClient();
+            ClusterClient clusterClient = new ClusterClient();
 
-            clusterClient.sendKeepAlive();
-            final ClusterClient finalClusterClient = clusterClient;
+            clusterClient.makeClusterAlive();
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println(" Closing cluster client...");
-                finalClusterClient.close();
+                System.out.println(" Closing cluster client... \n");
+                clusterClient.close();
             }));
 
             try {
-                Thread.sleep(5000);
+                Thread.sleep(10000);
                 SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
                 String messageSent = sendMessages.sendCustomMessage();
-                System.out.println("Custom message sent: " + messageSent);
+                System.out.println("Custom message sent: " + messageSent + "\n");
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
