@@ -3,6 +3,8 @@ package playground.app;
 import io.aeron.cluster.client.AeronCluster;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import io.aeron.samples.cluster.ClusterConfig;
+import playground.app.utils.Enviromental;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,26 +17,23 @@ public class ClusterClient implements AutoCloseable {
     private final MediaDriver mediaDriver;
     private final AeronCluster aeronCluster;
 
-    private void logError(final Throwable throwable) {
-        System.out.println("Error: " + throwable.getMessage());
-    }
-
     public ClusterClient() {
+        final int port = Enviromental.tryGetResponsePortFromEnv();
+        final String userhost = Enviromental.getThisHostName();
 
         mediaDriver = MediaDriver.launchEmbedded(new MediaDriver.Context()
                 .threadingMode(ThreadingMode.SHARED)
                 .dirDeleteOnStart(true)
                 .dirDeleteOnShutdown(true));
 
-        final String[] hostnames = System.getProperty(
-                "aeron.cluster.tutorial.hostnames", "localhost,localhost,localhost").split(",");
-        final String ingressEndpoints = ingressEndpoints(Arrays.asList(hostnames));
+        final List<String> hostnames = Arrays.asList(Enviromental.tryGetClusterHostsFromEnv().split(","));
+        final String ingressEndpoints = ClusterConfig.ingressEndpoints(
+                hostnames, 9000, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
 
         aeronCluster = AeronCluster.connect(
                 new AeronCluster.Context()
-                        .egressChannel("aeron:udp?endpoint=localhost:0")
+                        .egressChannel("aeron:udp?endpoint=" + userhost + ":" + port)
                         .aeronDirectoryName(mediaDriver.aeronDirectoryName())
-                        .errorHandler(this::logError)
                         .ingressChannel("aeron:udp?term-length=64k")
                         .ingressEndpoints(ingressEndpoints));
         System.out.println("Cluster connection succeeded!" + " Leader is node " + aeronCluster.leaderMemberId() + "\n");
@@ -66,21 +65,4 @@ public class ClusterClient implements AutoCloseable {
         mediaDriver.close();
     }
 
-    private String ingressEndpoints(final List<String> hostnames) {
-        final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < hostnames.size(); i++) {
-            sb.append(i).append('=');
-            sb.append(hostnames.get(i)).append(':').append(
-                    calculatePort(i, 9000));
-            sb.append(',');
-        }
-
-        sb.setLength(sb.length() - 1);
-
-        return sb.toString();
-    }
-
-    private int calculatePort(final int nodeId, final int basePort) {
-        return basePort + nodeId;
-    }
 }

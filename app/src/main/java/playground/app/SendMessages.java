@@ -1,8 +1,8 @@
 package playground.app;
 
 import io.aeron.cluster.client.AeronCluster;
-import io.aeron.samples.simple.ClientSaysHelloEncoder;
-import io.aeron.samples.simple.MessageHeaderEncoder;
+import io.aeron.samples.cluster.protocol.ClientSaysHelloEncoder;
+import io.aeron.samples.cluster.protocol.MessageHeaderEncoder;
 
 import java.util.UUID;
 

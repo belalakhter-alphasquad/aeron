@@ -53,6 +53,7 @@ tasks.named<Jar>("jar") {
     manifest {
         attributes(
             "Main-Class" to "playground.app.Main",
+            "Add-Opens" to "java.base/sun.nio.ch",
             "Implementation-Title" to "Bilal's Playground",
             "Implementation-Version" to project.version
         )
