@@ -58,7 +58,7 @@ tasks.named<Jar>("jar") {
             "Implementation-Version" to project.version
         )
     }
-    archiveBaseName.set("bilals-playground")
+    archiveBaseName.set("app")
     archiveVersion.set("1.0.0")
     from(sourceSets.main.get().output)
 

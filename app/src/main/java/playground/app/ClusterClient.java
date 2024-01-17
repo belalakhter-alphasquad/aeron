@@ -14,6 +14,7 @@ public class ClusterClient implements AutoCloseable {
     private static final long HEARTBEAT_INTERVAL_MS = 250;
 
     private final MediaDriver mediaDriver;
+    private Egresslistener clientEgresslistener;
     private final AeronCluster aeronCluster;
     private Thread pollingThread;
     private volatile boolean running = true;
@@ -32,8 +33,11 @@ public class ClusterClient implements AutoCloseable {
         final String ingressEndpoints = ClusterConfig.ingressEndpoints(
                 hostnames, 9000, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
 
+        clientEgresslistener = new Egresslistener();
+
         aeronCluster = AeronCluster.connect(
                 new AeronCluster.Context()
+                        .egressListener(clientEgresslistener)
                         .egressChannel("aeron:udp?endpoint=" + userhost + ":" + port)
                         .aeronDirectoryName(mediaDriver.aeronDirectoryName())
                         .ingressChannel("aeron:udp?term-length=64k")
@@ -50,6 +54,7 @@ public class ClusterClient implements AutoCloseable {
         pollingThread = new Thread(() -> {
             while (running && !aeronCluster.isClosed()) {
                 aeronCluster.sendKeepAlive();
+                System.out.println("Sending Heartbeat to the Cluster!");
                 aeronCluster.pollEgress();
                 try {
                     Thread.sleep(HEARTBEAT_INTERVAL_MS);

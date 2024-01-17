@@ -14,7 +14,7 @@ public class Main {
             }));
 
             try {
-                Thread.sleep(10000);
+                Thread.sleep(2000);
                 SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
                 String messageSent = sendMessages.sendCustomMessage();
                 System.out.println("Custom message sent: " + messageSent + "\n");
