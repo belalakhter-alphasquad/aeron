@@ -1,6 +1,6 @@
 # Simple Barebone aeron cluster client
 
-**!Make sure Cluster is running there is no Cluster implementation in this repository**
+**Make sure Cluster is running there is no Cluster implementation in this repository**
 
 Use command `./gradlew client`
 
