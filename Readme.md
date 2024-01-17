@@ -9,4 +9,5 @@ This will do following:
 - Connect to cluster and send a message to it and listen to response from cluster
 
 This client is aligned with configuration for endpoints and protocol Codecs in:
+
 https://github.com/alphaTaha/tm-playground/tree/main/aeron-echo-broadcast-cluster
