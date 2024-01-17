@@ -11,7 +11,7 @@ repositories {
     mavenCentral()
 }
 
-val generatedDir = file("${buildDir}/generated/src/main/java")
+val generatedDir = layout.buildDirectory.dir("generated/src/main/java")
 val codecGeneration = configurations.create("codecGeneration")
 
 dependencies {
