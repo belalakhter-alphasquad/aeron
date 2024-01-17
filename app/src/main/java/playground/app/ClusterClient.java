@@ -54,7 +54,6 @@ public class ClusterClient implements AutoCloseable {
         pollingThread = new Thread(() -> {
             while (running && !aeronCluster.isClosed()) {
                 aeronCluster.sendKeepAlive();
-                System.out.println("Sending Heartbeat to the Cluster!");
                 aeronCluster.pollEgress();
                 try {
                     Thread.sleep(HEARTBEAT_INTERVAL_MS);

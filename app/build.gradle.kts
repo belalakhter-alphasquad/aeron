@@ -78,3 +78,11 @@ tasks.named("build") {
     dependsOn("jar")
 }
 
+
+tasks.register<JavaExec>("client") {
+    dependsOn("generateCodecs", "jar")
+    
+    mainClass.set("playground.app.Main") 
+    classpath = files(tasks.getByName<Jar>("jar").archiveFile.get())
+    jvmArgs("--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED")
+}
