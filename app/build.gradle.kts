@@ -10,7 +10,7 @@ application {
 repositories {
     mavenCentral()
 }
-buildDir = layout.buildDirectory.set(layout.projectDirectory.dir("out"))
+
 val generatedDir = file("${buildDir}/generated/src/main/java")
 val codecGeneration = configurations.create("codecGeneration")
 
