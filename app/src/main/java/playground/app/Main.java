@@ -14,11 +14,22 @@ public class Main {
             }));
 
             try {
-                Thread.sleep(2000);
-                SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
-                String messageSent = sendMessages.sendCustomMessage();
-                System.out.println("Custom message sent: " + messageSent + "\n");
-
+                int j = 1;
+                String jProp = System.getProperty("j");
+                if (jProp != null) {
+                    try {
+                        j = Integer.parseInt(jProp);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid format for jValue, using default.");
+                    }
+                }
+                int i;
+                for (i = 0; i < j; i++) {
+                    Thread.sleep(20);
+                    SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
+                    String messageSent = sendMessages.sendCustomMessage();
+                    System.out.println("Custom message sent: " + messageSent + "\n");
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

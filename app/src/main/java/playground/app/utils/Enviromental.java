@@ -31,10 +31,13 @@ public class Enviromental {
     }
 
     public static String tryGetClusterHostsFromEnv() {
-        String clusterAddresses = System.getenv("CLUSTER_ADDRESSES");
-        if (null == clusterAddresses || clusterAddresses.isEmpty()) {
-            clusterAddresses = System.getProperty("cluster.addresses", "localhost");
-        }
+        String clusterAddresses = "localhost";
+        /*
+         * String clusterAddresses = System.getenv("CLUSTER_ADDRESSES");
+         * if (null == clusterAddresses || clusterAddresses.isEmpty()) {
+         * clusterAddresses = System.getProperty("cluster.addresses", "54.88.62.187");
+         * }
+         */
         return clusterAddresses;
     }
 
@@ -43,6 +46,7 @@ public class Enviromental {
         if (null == responsePort || responsePort.isEmpty()) {
             responsePort = System.getProperty("response.port", "0");
         }
+        System.out.println(responsePort);
         return parseInt(responsePort);
     }
 

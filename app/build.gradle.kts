@@ -78,8 +78,12 @@ tasks.named("build") {
     dependsOn("jar")
 }
 
+if (!project.hasProperty("messages")) {
+    project.ext.set("messages", "1")
+}
 
 tasks.register<JavaExec>("client") {
+    systemProperties["j"] = project.property("messages").toString()
     dependsOn("generateCodecs", "jar")
     
     mainClass.set("playground.app.Main") 

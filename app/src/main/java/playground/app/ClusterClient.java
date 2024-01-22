@@ -22,23 +22,22 @@ public class ClusterClient implements AutoCloseable {
     public ClusterClient() {
 
         final int port = Enviromental.tryGetResponsePortFromEnv();
-        final String userhost = Enviromental.getThisHostName();
+        // final String userhost = Enviromental.getThisHostName();
 
         mediaDriver = MediaDriver.launchEmbedded(new MediaDriver.Context()
                 .threadingMode(ThreadingMode.SHARED)
                 .dirDeleteOnStart(true)
                 .dirDeleteOnShutdown(true));
 
-        final List<String> hostnames = Arrays.asList(Enviromental.tryGetClusterHostsFromEnv().split(","));
-        final String ingressEndpoints = ClusterConfig.ingressEndpoints(
-                hostnames, 9000, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
-
+        List<String> hostnames = Arrays.asList("54.88.62.187");
+        final String ingressEndpoints = ClusterConfig.ingressEndpoints(hostnames, 9000, 2);
+        // hostnames, 9000, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
         clientEgresslistener = new Egresslistener();
-
+        System.out.println(ingressEndpoints);
         aeronCluster = AeronCluster.connect(
                 new AeronCluster.Context()
                         .egressListener(clientEgresslistener)
-                        .egressChannel("aeron:udp?endpoint=" + userhost + ":" + port)
+                        .egressChannel("aeron:udp?endpoint=" + "54.90.147.109" + ":" + port)
                         .aeronDirectoryName(mediaDriver.aeronDirectoryName())
                         .ingressChannel("aeron:udp?term-length=64k")
                         .ingressEndpoints(ingressEndpoints));
