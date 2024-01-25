@@ -24,6 +24,8 @@ import org.agrona.concurrent.status.AtomicCounter;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 import static io.aeron.samples.cluster.ClusterConfig.*;
 import static org.agrona.BitUtil.SIZE_OF_INT;
@@ -32,6 +34,7 @@ public final class ClusterService implements AutoCloseable {
     private static final int SEND_ATTEMPTS = 3;
     private static final int TIMER_ID = 2;
     private static final int PORT_BASE = 9000;
+    private final static List<ClientSession> allSessions = new ArrayList<>();
 
     final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();
     private ClusterConfig config;
@@ -44,32 +47,13 @@ public final class ClusterService implements AutoCloseable {
         private int messageCount = 0;
         private final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer();
 
-        public void onStart(final Cluster cluster, final Image snapshotImage) {
-            this.cluster = cluster;
-            this.idleStrategy = cluster.idleStrategy();
-
-            if (null != snapshotImage) {
-                System.out.println("onStart load snapshot");
-                final FragmentHandler fragmentHandler = (buffer, offset, length,
-                        header) -> messageCount = buffer.getInt(offset);
-
-                idleStrategy.reset();
-                while (snapshotImage.poll(fragmentHandler, 1) <= 0) {
-                    idleStrategy.idle();
-                }
-
-                System.out.println("snapshot messageCount=" + messageCount);
-            }
-        }
-
+        @Override
         public void onSessionOpen(final ClientSession session, final long timestamp) {
             System.out.println("onSessionOpen " + session.id());
+            allSessions.add(session);
         }
 
-        public void onSessionClose(final ClientSession session, final long timestamp, final CloseReason closeReason) {
-            System.out.println("onSessionClose " + session.id() + " " + closeReason);
-        }
-
+        @Override
         public void onSessionMessage(
                 final ClientSession session,
                 final long timestamp,
@@ -110,13 +94,6 @@ public final class ClusterService implements AutoCloseable {
             }
         }
 
-        public void onRoleChange(final Cluster.Role newRole) {
-            System.out.println("onRoleChange " + newRole);
-        }
-
-        public void onTerminate(final Cluster cluster) {
-        }
-
         public void onNewLeadershipTermEvent(
                 final long leadershipTermId,
                 final long logPosition,
@@ -145,6 +122,39 @@ public final class ClusterService implements AutoCloseable {
                 idleStrategy.idle();
             } while (--attempts > 0);
         }
+
+        public void onRoleChange(final Cluster.Role newRole) {
+            System.out.println("onRoleChange " + newRole);
+        }
+
+        public void onTerminate(final Cluster cluster) {
+        }
+
+        @Override
+        public void onStart(final Cluster cluster, final Image snapshotImage) {
+            this.cluster = cluster;
+            this.idleStrategy = cluster.idleStrategy();
+
+            if (null != snapshotImage) {
+                System.out.println("onStart load snapshot");
+                final FragmentHandler fragmentHandler = (buffer, offset, length,
+                        header) -> messageCount = buffer.getInt(offset);
+
+                idleStrategy.reset();
+                while (snapshotImage.poll(fragmentHandler, 1) <= 0) {
+                    idleStrategy.idle();
+                }
+
+                System.out.println("snapshot messageCount=" + messageCount);
+            }
+        }
+
+        @Override
+        public void onSessionClose(ClientSession session, long timestamp, CloseReason closeReason) {
+            System.out.println("onSessionClose " + session.id() + " " + closeReason);
+            allSessions.remove(session);
+        }
+
     }
 
     public void SingleNodeCluster() {

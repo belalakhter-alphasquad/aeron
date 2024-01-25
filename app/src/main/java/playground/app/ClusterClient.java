@@ -33,7 +33,6 @@ public class ClusterClient implements AutoCloseable {
         final String ingressEndpoints = ClusterConfig.ingressEndpoints(hostnames, 9000, 2);
         // hostnames, 9000, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
         clientEgresslistener = new Egresslistener();
-        System.out.println(ingressEndpoints);
         aeronCluster = AeronCluster.connect(
                 new AeronCluster.Context()
                         .egressListener(clientEgresslistener)
