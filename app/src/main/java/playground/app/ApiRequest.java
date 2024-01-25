@@ -1,10 +1,11 @@
 package playground.app;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 
 public class ApiRequest extends Thread {
     private final String gatewayUrl;
@@ -17,25 +18,19 @@ public class ApiRequest extends Thread {
 
     @Override
     public void run() {
+        HttpClient client = HttpClient.newHttpClient();
+
         for (int i = 0; i < numberOfCalls; i++) {
             try {
-                URL url = new URL(gatewayUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
-                try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = "Place the order".getBytes("utf-8");
-                    os.write(input, 0, input.length);
-                }
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-                    StringBuilder response = new StringBuilder();
-                    String responseLine;
-                    while ((responseLine = br.readLine()) != null) {
-                        response.append(responseLine.trim());
-                    }
-                    System.out.println("Response from server: " + response.toString());
-                }
-                connection.disconnect();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(gatewayUrl))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString("Place the order", StandardCharsets.UTF_8))
+                        .build();
+
+                HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+
+                System.out.println("Response from server: " + response.body());
 
             } catch (Exception e) {
                 e.printStackTrace();

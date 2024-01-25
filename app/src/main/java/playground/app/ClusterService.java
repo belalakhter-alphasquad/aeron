@@ -1,31 +1,26 @@
 package playground.app;
 
-import io.aeron.CommonContext;
 import io.aeron.ExclusivePublication;
 import io.aeron.Image;
 import io.aeron.cluster.ClusterControl;
 import io.aeron.cluster.ClusteredMediaDriver;
 import io.aeron.cluster.ConsensusModule;
-import io.aeron.cluster.client.AeronCluster;
-import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.CloseReason;
 import io.aeron.cluster.service.ClientSession;
 import io.aeron.cluster.service.Cluster;
 import io.aeron.cluster.service.ClusteredService;
 import io.aeron.cluster.service.ClusteredServiceContainer;
-import io.aeron.driver.MediaDriver;
-import io.aeron.driver.ThreadingMode;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
 import io.aeron.samples.cluster.ClusterConfig;
+
 import org.agrona.CloseHelper;
 import org.agrona.DirectBuffer;
 import org.agrona.ErrorHandler;
 import org.agrona.ExpandableArrayBuffer;
 import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.YieldingIdleStrategy;
+import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.status.AtomicCounter;
-import org.agrona.console.ContinueBarrier;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -38,9 +33,10 @@ public final class ClusterService implements AutoCloseable {
     private static final int TIMER_ID = 2;
     private static final int PORT_BASE = 9000;
 
-    private final ClusterConfig config;
-    private final ClusteredMediaDriver clusteredMediaDriver;
-    private final ClusteredServiceContainer container;
+    final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();
+    private ClusterConfig config;
+    private ClusteredMediaDriver clusteredMediaDriver;
+    private ClusteredServiceContainer container;
 
     static class Service implements ClusteredService {
         protected Cluster cluster;
@@ -152,20 +148,26 @@ public final class ClusterService implements AutoCloseable {
     }
 
     public void SingleNodeCluster() {
-        config = ClusterConfig.create(0, Collections.singletonList("localhost"), PORT_BASE, service);
+        try {
+            final ClusteredService service = new Service();
+            config = ClusterConfig.create(0, Collections.singletonList("localhost"), PORT_BASE, service);
 
-        config.mediaDriverContext().dirDeleteOnStart(true);
-        config.archiveContext().deleteArchiveOnStart(true);
-        config.consensusModuleContext()
-                .ingressChannel("aeron:udp?endpoint=" + config.ingressHostname() + ":" +
-                        calculatePort(config.memberId(), PORT_BASE, CLIENT_FACING_PORT_OFFSET));
+            config.mediaDriverContext().dirDeleteOnStart(true);
+            config.archiveContext().deleteArchiveOnStart(true);
+            config.consensusModuleContext()
+                    .ingressChannel("aeron:udp?endpoint=" + config.ingressHostname() + ":" +
+                            calculatePort(config.memberId(), PORT_BASE, CLIENT_FACING_PORT_OFFSET));
 
-        clusteredMediaDriver = ClusteredMediaDriver.launch(
-                config.mediaDriverContext(),
-                config.archiveContext(),
-                config.consensusModuleContext());
+            clusteredMediaDriver = ClusteredMediaDriver.launch(
+                    config.mediaDriverContext(),
+                    config.archiveContext(),
+                    config.consensusModuleContext());
 
-        container = ClusteredServiceContainer.launch(config.clusteredServiceContext());
+            container = ClusteredServiceContainer.launch(config.clusteredServiceContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void close() {
