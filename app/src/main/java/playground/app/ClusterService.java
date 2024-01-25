@@ -13,8 +13,8 @@ import io.aeron.cluster.service.ClusteredServiceContainer;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
 import io.aeron.samples.cluster.ClusterConfig;
-
 import org.agrona.CloseHelper;
+import java.io.File;
 import org.agrona.DirectBuffer;
 import org.agrona.ErrorHandler;
 import org.agrona.ExpandableArrayBuffer;
@@ -26,11 +26,10 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.List;
-
-import static io.aeron.samples.cluster.ClusterConfig.*;
 import static org.agrona.BitUtil.SIZE_OF_INT;
 
 public final class ClusterService implements AutoCloseable {
+
     private static final int SEND_ATTEMPTS = 3;
     private static final int TIMER_ID = 2;
     private static final int PORT_BASE = 9000;
@@ -159,14 +158,14 @@ public final class ClusterService implements AutoCloseable {
 
     public void SingleNodeCluster() {
         try {
-            final ClusteredService service = new Service();
-            config = ClusterConfig.create(0, Collections.singletonList("localhost"), PORT_BASE, service);
+
+            config = ClusterConfig.create(0, Collections.singletonList("127.0.0.1"), PORT_BASE, new Service());
 
             config.mediaDriverContext().dirDeleteOnStart(true);
             config.archiveContext().deleteArchiveOnStart(true);
-            config.consensusModuleContext()
-                    .ingressChannel("aeron:udp?endpoint=" + config.ingressHostname() + ":" +
-                            calculatePort(config.memberId(), PORT_BASE, CLIENT_FACING_PORT_OFFSET));
+            config.consensusModuleContext().ingressChannel("aeron:udp");
+            config.baseDir(getBaseDir(0));
+            config.consensusModuleContext().leaderHeartbeatTimeoutNs(TimeUnit.SECONDS.toNanos(3));
 
             clusteredMediaDriver = ClusteredMediaDriver.launch(
                     config.mediaDriverContext(),
@@ -178,6 +177,15 @@ public final class ClusterService implements AutoCloseable {
             e.printStackTrace();
         }
 
+    }
+
+    private static File getBaseDir(final int nodeId) {
+        final String baseDir = System.getenv("BASE_DIR");
+        if (null == baseDir || baseDir.isEmpty()) {
+            return new File(System.getProperty("user.dir"), "node" + nodeId);
+        }
+
+        return new File(baseDir);
     }
 
     public void close() {

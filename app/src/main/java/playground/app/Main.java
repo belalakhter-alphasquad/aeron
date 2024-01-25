@@ -11,7 +11,7 @@ public class Main {
                 }
             });
             clusterThread.start();
-            Thread.sleep(2000);
+            Thread.sleep(10000);
             ClusterClient clusterClient = new ClusterClient();
             Thread gatewayThread = new Thread(() -> {
                 try {
