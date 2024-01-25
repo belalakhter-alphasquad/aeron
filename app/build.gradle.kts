@@ -19,7 +19,8 @@ dependencies {
     implementation("org.agrona:agrona:1.20.0")
     implementation("io.aeron:aeron-cluster:1.43.0")
     implementation("io.aeron:aeron-driver:1.43.0")
-    implementation("io.aeron:aeron-samples:1.43.0")   
+    implementation("io.aeron:aeron-samples:1.43.0")
+    implementation("org.slf4j:slf4j-api:2.1.0-alpha1")   
 }
 
 
