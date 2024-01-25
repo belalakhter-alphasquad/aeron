@@ -14,17 +14,23 @@ public class Main {
             }));
 
             try {
-                int j = 1;
-                String jProp = System.getProperty("j");
-                if (jProp != null) {
+                new Gateway();
+                int number_of_messages = 1;
+                String number_of_messages_Prop = System.getProperty("number_of_messages");
+                String gatewayUrl = "http://localhost:3000/placeOrder";
+                int numberOfCalls = 5;
+                ApiRequest apiRequest = new ApiRequest(gatewayUrl, numberOfCalls);
+                apiRequest.start();
+
+                if (number_of_messages_Prop != null) {
                     try {
-                        j = Integer.parseInt(jProp);
+                        number_of_messages = Integer.parseInt(number_of_messages_Prop);
                     } catch (NumberFormatException e) {
-                        System.err.println("Invalid format for jValue, using default.");
+                        System.err.println("Invalid format for number of message paramter, using default.");
                     }
                 }
                 int i;
-                for (i = 0; i < j; i++) {
+                for (i = 0; i < number_of_messages; i++) {
                     Thread.sleep(20);
                     SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
                     String messageSent = sendMessages.sendCustomMessage();

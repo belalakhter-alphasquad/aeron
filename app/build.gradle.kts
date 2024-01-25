@@ -83,7 +83,7 @@ if (!project.hasProperty("messages")) {
 }
 
 tasks.register<JavaExec>("client") {
-    systemProperties["j"] = project.property("messages").toString()
+    systemProperties["number_of_messages"] = project.property("messages").toString()
     dependsOn("generateCodecs", "jar")
     
     mainClass.set("playground.app.Main") 

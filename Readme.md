@@ -1,6 +1,6 @@
-# Simple Barebone aeron cluster client
+# Simple Barebone implementation of Order placement from API to Aeron client and Aeron Cluster Service
 
-**Make sure Cluster is running there is no Cluster implementation in this repository**
+## Commands
 
 Use command `./gradlew client`
 
