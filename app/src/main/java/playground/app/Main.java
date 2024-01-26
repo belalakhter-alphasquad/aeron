@@ -1,19 +1,13 @@
 package playground.app;
 
 public class Main {
-    // private static ClusterClient clusterClient;
 
     public static void main(final String[] args) {
 
         // ClusterService clusterService = new ClusterService();
         // clusterService.SingleNodeCluster();
-        // Thread ClusterClientThread = new Thread(new Runnable() {
-        // @Override
-        // public void run() {
+
         // clusterClient = new ClusterClient();
-        // }
-        // });
-        // ClusterClientThread.start();
 
         Thread gatewayThread = new Thread(() -> {
             try {
@@ -39,9 +33,8 @@ public class Main {
                 System.err.println("Invalid format for number of message parameter, using default.");
             }
         }
-        // clusterClient.close();
-        // clusterService.close();
+
         gatewayThread.interrupt();
-        // ClusterClientThread.interrupt();
+
     }
 }
