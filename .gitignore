@@ -30,3 +30,5 @@ desktop.ini
 /app/build/
 
 .gradle
+
+/logs/

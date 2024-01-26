@@ -21,6 +21,9 @@ dependencies {
     implementation("io.aeron:aeron-driver:1.43.0")
     implementation("io.aeron:aeron-samples:1.43.0")
     implementation("org.slf4j:slf4j-api:2.1.0-alpha1")   
+   implementation("ch.qos.logback:logback-classic:1.4.0") 
+    implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+
 }
 
 
@@ -51,6 +54,7 @@ tasks.register("generateCodecs", JavaExec::class) {
 
 
 tasks.named<Jar>("jar") {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
         attributes(
             "Main-Class" to "playground.app.Main",
