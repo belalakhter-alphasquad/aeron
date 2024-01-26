@@ -70,6 +70,9 @@ tasks.named<Jar>("jar") {
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
 
+tasks.named<JavaExec>("run") {
+    jvmArgs("--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED")
+}
 
 
 
@@ -83,6 +86,7 @@ tasks.named("build") {
     dependsOn("jar")
 }
 
+
 if (!project.hasProperty("messages")) {
     project.ext.set("messages", "1")
 }
@@ -95,3 +99,4 @@ tasks.register<JavaExec>("client") {
     classpath = files(tasks.getByName<Jar>("jar").archiveFile.get())
     jvmArgs("--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED")
 }
+
