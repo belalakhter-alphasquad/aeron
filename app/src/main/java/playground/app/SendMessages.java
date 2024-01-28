@@ -1,8 +1,8 @@
 package playground.app;
 
 import io.aeron.cluster.client.AeronCluster;
-import io.aeron.samples.cluster.protocol.ClientSaysHelloEncoder;
-import io.aeron.samples.cluster.protocol.MessageHeaderEncoder;
+import playground.app.ClientSaysHelloEncoder;
+import playground.app.MessageHeaderEncoder;
 
 import java.util.UUID;
 
@@ -30,7 +30,7 @@ public class SendMessages {
                         clientSaysHelloCommandEncoder.encodedLength());
 
             if (offerResult >= 0L) {
-                  return "Message sent successfully. Correlation ID: " + correlationId;
+                  return "Message sent successfully. " + correlationId;
             } else {
                   return "Failed to send message. Error code: " + offerResult;
             }

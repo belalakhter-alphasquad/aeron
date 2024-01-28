@@ -5,12 +5,12 @@ import org.agrona.DirectBuffer;
 import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.EventCode;
 import io.aeron.logbuffer.Header;
-import io.aeron.samples.cluster.protocol.HelloResponseBroadcastDecoder;
-import io.aeron.samples.cluster.protocol.MessageHeaderDecoder;
+import playground.app.HelloResponseBroadcastDecoder;
+import playground.app.MessageHeaderDecoder;
 
 public class Egresslistener implements EgressListener {
-    private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
-    private final HelloResponseBroadcastDecoder helloResponseBroadcastDecoder = new HelloResponseBroadcastDecoder();
+    private static final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
+    private static final HelloResponseBroadcastDecoder helloResponseBroadcastDecoder = new HelloResponseBroadcastDecoder();
 
     public void EgressListener() {
         System.out.println("Egress listener constructor!");
@@ -36,6 +36,17 @@ public class Egresslistener implements EgressListener {
         }
     }
 
+    private void displayHelloResponseBroadcast(final DirectBuffer buffer, final int offset) {
+        helloResponseBroadcastDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+
+        final String clientName = helloResponseBroadcastDecoder.clientName();
+        final String echoMessage = helloResponseBroadcastDecoder.clientMesssageEcho();
+
+        System.out.println("Client Name: " + clientName + ", Client Message: " + echoMessage);
+        System.out.println("/n");
+        System.out.println("This is from Egress listener\n");
+    }
+
     @Override
     public void onSessionEvent(
             final long correlationId,
@@ -57,13 +68,6 @@ public class Egresslistener implements EgressListener {
             final int leaderMemberId,
             final String ingressEndpoints) {
         System.out.println("New Leader: " + leaderMemberId + ". leadershipTermId=" + leadershipTermId);
-    }
-
-    private void displayHelloResponseBroadcast(final DirectBuffer buffer, final int offset) {
-        helloResponseBroadcastDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        final String clientName = helloResponseBroadcastDecoder.clientName();
-        final String echoMessage = helloResponseBroadcastDecoder.clientMesssageEcho();
-        System.out.println("Client Name: " + clientName + ", Client Message: " + echoMessage);
     }
 
 }

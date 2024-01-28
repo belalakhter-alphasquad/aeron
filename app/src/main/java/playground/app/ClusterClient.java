@@ -58,7 +58,7 @@ public class ClusterClient implements AutoCloseable {
                     Thread.sleep(HEARTBEAT_INTERVAL_MS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    System.out.println("Cluster connection is closed \n");
+                    System.out.println("Client is closed this is from client \n");
                 }
             }
         });
@@ -69,6 +69,8 @@ public class ClusterClient implements AutoCloseable {
     @Override
     public void close() {
         running = false;
+        aeronCluster.close();
+        mediaDriver.close();
         if (pollingThread != null) {
             pollingThread.interrupt();
             try {
@@ -78,8 +80,6 @@ public class ClusterClient implements AutoCloseable {
                 System.out.println("Interrupted closing the connection \n");
             }
         }
-        aeronCluster.close();
-        mediaDriver.close();
     }
 
 }

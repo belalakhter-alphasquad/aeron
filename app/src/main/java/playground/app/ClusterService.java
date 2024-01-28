@@ -5,6 +5,7 @@ import io.aeron.Image;
 import io.aeron.cluster.ClusterControl;
 import io.aeron.cluster.ClusteredMediaDriver;
 import io.aeron.cluster.ConsensusModule;
+
 import io.aeron.cluster.codecs.CloseReason;
 import io.aeron.cluster.service.ClientSession;
 import io.aeron.cluster.service.Cluster;
@@ -12,6 +13,9 @@ import io.aeron.cluster.service.ClusteredService;
 import io.aeron.cluster.service.ClusteredServiceContainer;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
+import playground.app.MessageHeaderDecoder;
+import playground.app.ClientSaysHelloDecoder;
+
 import io.aeron.samples.cluster.ClusterConfig;
 import org.agrona.CloseHelper;
 import java.io.File;
@@ -19,6 +23,7 @@ import java.io.File;
 import org.agrona.DirectBuffer;
 import org.agrona.ErrorHandler;
 import org.agrona.ExpandableArrayBuffer;
+import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.status.AtomicCounter;
@@ -35,6 +40,8 @@ public final class ClusterService implements AutoCloseable {
     private static final int TIMER_ID = 2;
     private static final int PORT_BASE = 9000;
     private final static List<ClientSession> allSessions = new ArrayList<>();
+    private static final MessageHeaderDecoder headerDecoder = new MessageHeaderDecoder();
+    private static final ClientSaysHelloDecoder clientSaysHelloDecoder = new ClientSaysHelloDecoder();
 
     final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();
     private ClusterConfig config;
@@ -49,7 +56,7 @@ public final class ClusterService implements AutoCloseable {
 
         @Override
         public void onSessionOpen(final ClientSession session, final long timestamp) {
-            System.out.println("onSessionOpen " + session.id());
+            System.out.println("New  Client session opened " + session.id() + "\n");
             allSessions.add(session);
         }
 
@@ -62,7 +69,8 @@ public final class ClusterService implements AutoCloseable {
                 final int length,
                 final Header header) {
             messageCount++;
-            System.out.println(cluster.role() + " onSessionMessage " + session.id() + " count=" + messageCount);
+            System.out.println(cluster.role() + " onSessionMessage " + session.id() + " count=" + messageCount + "\n");
+            dispatch(buffer, offset, length);
 
             final int id = buffer.getInt(offset);
             if (TIMER_ID == id) {
@@ -75,8 +83,24 @@ public final class ClusterService implements AutoCloseable {
             }
         }
 
+        public void dispatch(final DirectBuffer buffer, final int offset, final int length) {
+
+            headerDecoder.wrap(buffer, offset);
+
+            switch (headerDecoder.templateId()) {
+
+                case ClientSaysHelloDecoder.TEMPLATE_ID -> {
+                    clientSaysHelloDecoder.wrapAndApplyHeader(buffer, offset, headerDecoder);
+                    System.out.println(clientSaysHelloDecoder.correlationId() + " "
+                            + "this message recieved on cluster service\n");
+                }
+
+                default -> System.out.println("Unknown message recieved from gateway");
+            }
+        }
+
         public void onTimerEvent(final long correlationId, final long timestamp) {
-            System.out.println("onTimerEvent " + correlationId);
+            System.out.println("onTimerEvent " + correlationId + "\n");
 
             final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer();
             buffer.putInt(0, 1);
@@ -85,7 +109,7 @@ public final class ClusterService implements AutoCloseable {
         }
 
         public void onTakeSnapshot(final ExclusivePublication snapshotPublication) {
-            System.out.println("onTakeSnapshot messageCount=" + messageCount);
+            System.out.println("onTakeSnapshot messageCount=" + messageCount + "\n");
 
             buffer.putInt(0, messageCount);
             idleStrategy.reset();
@@ -103,7 +127,7 @@ public final class ClusterService implements AutoCloseable {
                 final int logSessionId,
                 final TimeUnit timeUnit,
                 final int appVersion) {
-            System.out.println("onNewLeadershipTermEvent");
+            System.out.println("Chooosing new leader\n");
         }
 
         protected long serviceCorrelationId(final int correlationId) {
@@ -124,7 +148,7 @@ public final class ClusterService implements AutoCloseable {
         }
 
         public void onRoleChange(final Cluster.Role newRole) {
-            System.out.println("onRoleChange " + newRole);
+            System.out.println("Service is selecting new role " + newRole + "\n");
         }
 
         public void onTerminate(final Cluster cluster) {
@@ -136,7 +160,7 @@ public final class ClusterService implements AutoCloseable {
             this.idleStrategy = cluster.idleStrategy();
 
             if (null != snapshotImage) {
-                System.out.println("onStart load snapshot");
+                System.out.println("onStart load snapshot\n");
                 final FragmentHandler fragmentHandler = (buffer, offset, length,
                         header) -> messageCount = buffer.getInt(offset);
 
@@ -145,13 +169,13 @@ public final class ClusterService implements AutoCloseable {
                     idleStrategy.idle();
                 }
 
-                System.out.println("snapshot messageCount=" + messageCount);
+                System.out.println("snapshot messageCount=" + messageCount + "\n");
             }
         }
 
         @Override
         public void onSessionClose(ClientSession session, long timestamp, CloseReason closeReason) {
-            System.out.println("onSessionClose " + session.id() + " " + closeReason);
+            System.out.println("Client has closed connection " + session.id() + " " + closeReason + "\n");
             allSessions.remove(session);
         }
 
@@ -159,7 +183,10 @@ public final class ClusterService implements AutoCloseable {
 
     public void SingleNodeCluster() {
         try {
-
+            File baseDir = getBaseDir(0);
+            if (baseDir.exists()) {
+                deleteDirectory(baseDir);
+            }
             config = ClusterConfig.create(0, Collections.singletonList("127.0.0.1"), PORT_BASE, new Service());
 
             config.mediaDriverContext().dirDeleteOnStart(true);
@@ -189,11 +216,29 @@ public final class ClusterService implements AutoCloseable {
         return new File(baseDir);
     }
 
+    private static void deleteDirectory(File directory) {
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    deleteDirectory(file);
+                }
+            }
+        }
+        directory.delete();
+    }
+
+    @Override
     public void close() {
+        System.out.println("CLosing cluster service\n");
         final ErrorHandler errorHandler = clusteredMediaDriver.mediaDriver().context().errorHandler();
         CloseHelper.close(errorHandler, clusteredMediaDriver.consensusModule());
         CloseHelper.close(errorHandler, container);
         CloseHelper.close(clusteredMediaDriver);
+        // I m still not sure if its closed :)
+        clusteredMediaDriver.close();
+        container.close();
+
     }
 
     void takeSnapshot() {

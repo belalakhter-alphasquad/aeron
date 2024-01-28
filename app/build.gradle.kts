@@ -71,6 +71,9 @@ tasks.named<Jar>("jar") {
 }
 
 tasks.named<JavaExec>("run") {
+  dependsOn("generateCodecs", "jar")
+    mainClass.set("playground.app.Main") 
+    classpath = files(tasks.getByName<Jar>("jar").archiveFile.get())
     jvmArgs("--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED")
 }
 
@@ -87,14 +90,10 @@ tasks.named("build") {
 }
 
 
-if (!project.hasProperty("messages")) {
-    project.ext.set("messages", "1")
-}
 
-tasks.register<JavaExec>("client") {
-    systemProperties["number_of_messages"] = project.property("messages").toString()
+
+tasks.register<JavaExec>("app") {
     dependsOn("generateCodecs", "jar")
-    
     mainClass.set("playground.app.Main") 
     classpath = files(tasks.getByName<Jar>("jar").archiveFile.get())
     jvmArgs("--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED")
