@@ -22,6 +22,7 @@ public class ApiRequest extends Thread {
 
         for (int i = 0; i < numberOfCalls; i++) {
             try {
+                System.out.println("Making API Request to Gateway\n");
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(gatewayUrl))
                         .header("Content-Type", "application/x-www-form-urlencoded")

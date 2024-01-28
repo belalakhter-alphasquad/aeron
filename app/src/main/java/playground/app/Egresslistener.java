@@ -10,7 +10,7 @@ import playground.app.MessageHeaderDecoder;
 
 public class Egresslistener implements EgressListener {
     private static final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
-    private static final HelloResponseBroadcastDecoder helloResponseBroadcastDecoder = new HelloResponseBroadcastDecoder();
+    private static final ClientSaysHelloDecoder clientSaysHelloDecoder = new ClientSaysHelloDecoder();
 
     public void EgressListener() {
         System.out.println("Egress listener constructor!");
@@ -31,20 +31,20 @@ public class Egresslistener implements EgressListener {
         messageHeaderDecoder.wrap(buffer, offset);
 
         switch (messageHeaderDecoder.templateId()) {
-            case HelloResponseBroadcastDecoder.TEMPLATE_ID -> displayHelloResponseBroadcast(buffer, offset);
+            case ClientSaysHelloDecoder.TEMPLATE_ID -> displayClientSaysHelloDecoder(buffer, offset);
             default -> System.out.println("unknown message type: " + messageHeaderDecoder.templateId());
         }
     }
 
-    private void displayHelloResponseBroadcast(final DirectBuffer buffer, final int offset) {
-        helloResponseBroadcastDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+    private void displayClientSaysHelloDecoder(final DirectBuffer buffer, final int offset) {
+        clientSaysHelloDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
 
-        final String clientName = helloResponseBroadcastDecoder.clientName();
-        final String echoMessage = helloResponseBroadcastDecoder.clientMesssageEcho();
+        final String clientName = clientSaysHelloDecoder.clientName();
+        final String echoMessage = clientSaysHelloDecoder.clientMesssage();
 
-        System.out.println("Client Name: " + clientName + ", Client Message: " + echoMessage);
-        System.out.println("/n");
-        System.out.println("This is from Egress listener\n");
+        System.out.println(
+                "\nClient Name: " + clientName + ", Client Message: " + echoMessage
+                        + " -This is from Egress Listener\n");
     }
 
     @Override
