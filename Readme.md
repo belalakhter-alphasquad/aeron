@@ -2,14 +2,19 @@
 
 ## Commands
 
-Use command `./gradlew client`
+Use command `./gradlew run`
+
+Read the Terminal Logs can quickly give idea of this app.
 
 This will do following:
 
-- Use SBE All package to generate codecs which are in sbe folder in `app/`
-- Build the jar file app-1.0.0.jar in `app/build/libs` which use main class in app as entry point
-- Connect to cluster and send a message to it and listen to response from cluster
+- Generate Codec against messages in sbe Dir
+- Run a single node cluster service and cluster client instance
+- Http server gateway that pass Api request to aeron client and passes to cluster service
 
-This client is aligned with configuration for endpoints and protocol Codecs in:
+## Note
 
-https://github.com/alphaTaha/tm-playground/tree/main/aeron-echo-broadcast-cluster
+- Some features not completely handled like snapshoting and pending messages feature
+- Due to all services run in same machine there is no proper mechanisim for multi threading implemented
+
+#### This is only free time practice playground to understand things better
