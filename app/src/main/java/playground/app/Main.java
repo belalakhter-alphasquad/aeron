@@ -1,39 +1,27 @@
 package playground.app;
 
 public class Main {
-
     public static void main(final String[] args) {
-
         ClusterService clusterService = new ClusterService();
-        clusterService.SingleNodeCluster();
+        clusterService.RunClusterNode();
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
         ClusterClient clusterClient = new ClusterClient();
-        Gateway gateway = new Gateway(clusterClient);
+        SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
+        String messageSent = sendMessages.sendCustomMessage();
+        System.out.println("Sent from Client " + messageSent + "\n");
 
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        String gatewayUrl = "http://localhost:3000/placeOrder";
-        int numberOfCalls = 1;
-        ApiRequest apiRequest = new ApiRequest(gatewayUrl, numberOfCalls);
-        apiRequest.start();
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
+
             e.printStackTrace();
         }
         clusterClient.close();
         clusterService.close();
 
-        gateway.Close();
     }
-
 }

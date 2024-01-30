@@ -5,12 +5,12 @@ import org.agrona.DirectBuffer;
 import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.EventCode;
 import io.aeron.logbuffer.Header;
-import playground.app.HelloResponseBroadcastDecoder;
 import playground.app.MessageHeaderDecoder;
+import playground.app.DemoResponseDecoder;
 
 public class Egresslistener implements EgressListener {
     private static final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
-    private static final ClientSaysHelloDecoder clientSaysHelloDecoder = new ClientSaysHelloDecoder();
+    private final static DemoResponseDecoder DemoResponseDecoderCommand = new DemoResponseDecoder();
 
     public void EgressListener() {
         System.out.println("Egress listener constructor!");
@@ -31,20 +31,18 @@ public class Egresslistener implements EgressListener {
         messageHeaderDecoder.wrap(buffer, offset);
 
         switch (messageHeaderDecoder.templateId()) {
-            case ClientSaysHelloDecoder.TEMPLATE_ID -> displayClientSaysHelloDecoder(buffer, offset);
+            case DemoResponseDecoder.TEMPLATE_ID -> demoResponseDecoderCommand(buffer, offset);
             default -> System.out.println("unknown message type: " + messageHeaderDecoder.templateId());
         }
     }
 
-    private void displayClientSaysHelloDecoder(final DirectBuffer buffer, final int offset) {
-        clientSaysHelloDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+    private void demoResponseDecoderCommand(final DirectBuffer buffer, final int offset) {
+        DemoResponseDecoderCommand.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
 
-        final String clientName = clientSaysHelloDecoder.clientName();
-        final String echoMessage = clientSaysHelloDecoder.clientMesssage();
+        final String demoMessage = DemoResponseDecoderCommand.demoMessage();
 
         System.out.println(
-                "\nClient Name: " + clientName + ", Client Message: " + echoMessage
-                        + " -This is from Egress Listener\n");
+                "\n Quick Response Egress listerner recieved: " + demoMessage + "\n");
     }
 
     @Override
