@@ -12,6 +12,15 @@ This will do following:
 - Cluster client instance with getter
 - Gateway with one api handle right now
 
+## API Endpoints
+
+- localhost:3000/placeOrder
+  {
+  "OrderId": 123456,
+  "Symbol": "BTC",
+  "Quantity": 10
+  }
+
 ## Note
 
 - Some features not completely handled like snapshoting and pending messages feature
