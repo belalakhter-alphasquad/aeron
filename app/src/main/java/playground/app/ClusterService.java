@@ -29,7 +29,6 @@ import org.agrona.concurrent.status.AtomicCounter;
 import org.agrona.ExpandableDirectByteBuffer;
 import org.agrona.MutableDirectBuffer;
 
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -149,6 +148,7 @@ public final class ClusterService implements AutoCloseable {
         public void onStart(final Cluster cluster, final Image snapshotImage) {
             this.cluster = cluster;
             this.idleStrategy = cluster.idleStrategy();
+            System.out.println("Cluster Service is started");
 
             if (null != snapshotImage) {
                 System.out.println("onStart load snapshot\n");
@@ -172,18 +172,21 @@ public final class ClusterService implements AutoCloseable {
 
     }
 
-    public void RunClusterNode() {
+    public void RunClusterNode(int Node) {
+        List<String> Single = List.of("192.168.18.18");
+        List<String> ipAddresses = List.of("192.168.18.18", "192.168.18.19", "192.168.18.20");
         try {
-            File baseDir = getBaseDir(0);
+            File baseDir = getBaseDir(Node);
             if (baseDir.exists()) {
                 deleteDirectory(baseDir);
             }
-            config = ClusterConfig.create(0, Collections.singletonList("127.0.0.1"), PORT_BASE, new Service());
+            config = ClusterConfig.create(Node, Single,
+                    Single, PORT_BASE, new Service());
 
             config.mediaDriverContext().dirDeleteOnStart(true);
             config.archiveContext().deleteArchiveOnStart(true);
             config.consensusModuleContext().ingressChannel("aeron:udp");
-            config.baseDir(getBaseDir(0));
+            config.baseDir(baseDir);
             config.consensusModuleContext().leaderHeartbeatTimeoutNs(TimeUnit.SECONDS.toNanos(3));
 
             clusteredMediaDriver = ClusteredMediaDriver.launch(
@@ -221,14 +224,19 @@ public final class ClusterService implements AutoCloseable {
 
     @Override
     public void close() {
-        System.out.println("CLosing cluster service\n");
-        final ErrorHandler errorHandler = clusteredMediaDriver.mediaDriver().context().errorHandler();
-        CloseHelper.close(errorHandler, clusteredMediaDriver.consensusModule());
-        CloseHelper.close(errorHandler, container);
-        CloseHelper.close(clusteredMediaDriver);
-        // I m still not sure if its closed :)
-        clusteredMediaDriver.close();
-        container.close();
+        if (clusteredMediaDriver != null) {
+            System.out.println("CLosing cluster service\n");
+            final ErrorHandler errorHandler = clusteredMediaDriver.mediaDriver().context().errorHandler();
+            CloseHelper.close(errorHandler, clusteredMediaDriver.consensusModule());
+            CloseHelper.close(errorHandler, container);
+            CloseHelper.close(clusteredMediaDriver);
+            // I m still not sure if its closed :)
+            clusteredMediaDriver.close();
+            container.close();
+        } else {
+            System.out.println("Service not running");
+            return;
+        }
 
     }
 

@@ -15,7 +15,7 @@ public class Enviromental {
             while (interfaceEnumeration.hasMoreElements()) {
                 final var networkInterface = interfaceEnumeration.nextElement();
 
-                if (networkInterface.getName().startsWith("eth0")) {
+                if (networkInterface.getName().startsWith("eno1")) {
                     final Enumeration<InetAddress> interfaceAddresses = networkInterface.getInetAddresses();
                     while (interfaceAddresses.hasMoreElements()) {
                         if (interfaceAddresses.nextElement() instanceof Inet4Address inet4Address) {
@@ -27,11 +27,11 @@ public class Enviromental {
         } catch (final Exception e) {
             // ignore
         }
-        return "localhost";
+        return "192.168.18.18";
     }
 
     public static String tryGetClusterHostsFromEnv() {
-        String clusterAddresses = "localhost";
+        String clusterAddresses = "192.168.18.18";
         /*
          * String clusterAddresses = System.getenv("CLUSTER_ADDRESSES");
          * if (null == clusterAddresses || clusterAddresses.isEmpty()) {

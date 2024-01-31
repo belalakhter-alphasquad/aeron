@@ -29,7 +29,7 @@ public class ClusterClient implements AutoCloseable {
                 .dirDeleteOnStart(true)
                 .dirDeleteOnShutdown(true));
 
-        List<String> hostnames = Arrays.asList("localhost");
+        List<String> hostnames = Arrays.asList("192.168.18.18");
         final String ingressEndpoints = ClusterConfig.ingressEndpoints(hostnames, 9000, 2);
         // hostnames, 9000, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
         clientEgresslistener = new Egresslistener();
