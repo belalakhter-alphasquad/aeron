@@ -2,15 +2,15 @@
 
 ## Commands
 
-Use command `./gradlew run`
+Use command `./gradlew build`
 
-Read the Terminal Logs can quickly give idea of this app.
+Run the jar file in `build/libs`
 
 This will do following:
 
-- Generate Codec against messages in sbe Dir
-- Run a single node cluster service and cluster client instance
-- Http server gateway that pass Api request to aeron client and passes to cluster service
+- Run cluster service right now single node
+- Cluster client instance with getter
+- Gateway with one api handle right now
 
 ## Note
 
