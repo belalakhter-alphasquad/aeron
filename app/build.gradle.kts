@@ -21,8 +21,10 @@ dependencies {
     implementation("io.aeron:aeron-driver:1.43.0")
     implementation("io.aeron:aeron-samples:1.43.0")
     implementation("org.slf4j:slf4j-api:2.1.0-alpha1")   
+    implementation("com.google.code.gson:gson:2.8.9")
    implementation("ch.qos.logback:logback-classic:1.4.0") 
     implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+    implementation("org.jline:jline:3.20.0")
 
 }
 

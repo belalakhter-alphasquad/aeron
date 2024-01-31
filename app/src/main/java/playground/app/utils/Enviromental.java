@@ -46,7 +46,7 @@ public class Enviromental {
         if (null == responsePort || responsePort.isEmpty()) {
             responsePort = System.getProperty("response.port", "0");
         }
-        System.out.println(responsePort);
+
         return parseInt(responsePort);
     }
 

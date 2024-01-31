@@ -13,8 +13,6 @@ import io.aeron.cluster.service.ClusteredService;
 import io.aeron.cluster.service.ClusteredServiceContainer;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
-import playground.app.MessageHeaderDecoder;
-import playground.app.ClientSaysHelloDecoder;
 
 import io.aeron.samples.cluster.ClusterConfig;
 import org.agrona.CloseHelper;
@@ -23,10 +21,13 @@ import java.io.File;
 import org.agrona.DirectBuffer;
 import org.agrona.ErrorHandler;
 import org.agrona.ExpandableArrayBuffer;
-import org.agrona.MutableDirectBuffer;
+import playground.app.DemoResponseEncoder;
+import playground.app.MessageHeaderEncoder;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.status.AtomicCounter;
+import org.agrona.ExpandableDirectByteBuffer;
+import org.agrona.MutableDirectBuffer;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -40,13 +41,14 @@ public final class ClusterService implements AutoCloseable {
     private static final int TIMER_ID = 2;
     private static final int PORT_BASE = 9000;
     private final static List<ClientSession> allSessions = new ArrayList<>();
-    private static final MessageHeaderDecoder headerDecoder = new MessageHeaderDecoder();
-    private static final ClientSaysHelloDecoder clientSaysHelloDecoder = new ClientSaysHelloDecoder();
 
     final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();
     private ClusterConfig config;
     private ClusteredMediaDriver clusteredMediaDriver;
     private ClusteredServiceContainer container;
+
+    private final static MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
+    private final static DemoResponseEncoder DemoResponseEncoderCommand = new DemoResponseEncoder();
 
     static class Service implements ClusteredService {
         protected Cluster cluster;
@@ -56,7 +58,6 @@ public final class ClusterService implements AutoCloseable {
 
         @Override
         public void onSessionOpen(final ClientSession session, final long timestamp) {
-            System.out.println("New  Client session opened " + session.id() + "\n");
             allSessions.add(session);
         }
 
@@ -68,9 +69,10 @@ public final class ClusterService implements AutoCloseable {
                 final int offset,
                 final int length,
                 final Header header) {
+
             messageCount++;
-            System.out.println(cluster.role() + " onSessionMessage " + session.id() + " count=" + messageCount + "\n");
-            dispatch(buffer, offset, length);
+
+            SbeDemuxer.dispatch(session, buffer, offset, length);
 
             final int id = buffer.getInt(offset);
             if (TIMER_ID == id) {
@@ -79,23 +81,12 @@ public final class ClusterService implements AutoCloseable {
                     idleStrategy.idle();
                 }
             } else {
-                echoMessage(session, buffer, offset, length);
-            }
-        }
+                final MutableDirectBuffer sendBuffer = new ExpandableDirectByteBuffer(1024);
+                DemoResponseEncoderCommand.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
+                DemoResponseEncoderCommand.demoMessage("Demo Response");
 
-        public void dispatch(final DirectBuffer buffer, final int offset, final int length) {
-
-            headerDecoder.wrap(buffer, offset);
-
-            switch (headerDecoder.templateId()) {
-
-                case ClientSaysHelloDecoder.TEMPLATE_ID -> {
-                    clientSaysHelloDecoder.wrapAndApplyHeader(buffer, offset, headerDecoder);
-                    System.out.println(clientSaysHelloDecoder.correlationId() + " "
-                            + "this message recieved on cluster service\n");
-                }
-
-                default -> System.out.println("Unknown message recieved from gateway");
+                echoMessage(session, sendBuffer, 0,
+                        messageHeaderEncoder.encodedLength() + DemoResponseEncoderCommand.encodedLength());
             }
         }
 
@@ -127,14 +118,14 @@ public final class ClusterService implements AutoCloseable {
                 final int logSessionId,
                 final TimeUnit timeUnit,
                 final int appVersion) {
-            System.out.println("Chooosing new leader\n");
+
         }
 
         protected long serviceCorrelationId(final int correlationId) {
             return ((long) cluster.context().serviceId()) << 56 | correlationId;
         }
 
-        private void echoMessage(
+        public void echoMessage(
                 final ClientSession session, final DirectBuffer buffer, final int offset, final int length) {
             idleStrategy.reset();
             int attempts = SEND_ATTEMPTS;
@@ -148,7 +139,7 @@ public final class ClusterService implements AutoCloseable {
         }
 
         public void onRoleChange(final Cluster.Role newRole) {
-            System.out.println("Service is selecting new role " + newRole + "\n");
+
         }
 
         public void onTerminate(final Cluster cluster) {
@@ -181,7 +172,7 @@ public final class ClusterService implements AutoCloseable {
 
     }
 
-    public void SingleNodeCluster() {
+    public void RunClusterNode() {
         try {
             File baseDir = getBaseDir(0);
             if (baseDir.exists()) {
