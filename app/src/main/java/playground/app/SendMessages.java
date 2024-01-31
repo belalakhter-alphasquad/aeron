@@ -19,20 +19,20 @@ public class SendMessages {
             this.aeronCluster = aeronCluster;
       }
 
-      public String sendCustomMessage() {
+      public String sendCustomMessage(long SystemOrderId, String Symbol, long Quantity) {
             final String correlationId = UUID.randomUUID().toString();
             OrderMessageEncoderCommand.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
             OrderMessageEncoderCommand.uniqueClientOrderId(correlationId);
-            OrderMessageEncoderCommand.systemOrderId(20);
-            OrderMessageEncoderCommand.symbol(CryptoCurrencySymbol.valueOf("BTC"));
-            OrderMessageEncoderCommand.quantity((long) 0.25);
+            OrderMessageEncoderCommand.systemOrderId(SystemOrderId);
+            OrderMessageEncoderCommand.symbol(CryptoCurrencySymbol.valueOf(Symbol));
+            OrderMessageEncoderCommand.quantity((long) Quantity);
             long offerResult = aeronCluster.offer(sendBuffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
                         OrderMessageEncoderCommand.encodedLength());
 
             if (offerResult >= 0L) {
                   return String.format(
-                              " unique client order ID: %s, System Order ID: %d, Symbol: %s, Quantity: %.2f",
-                              correlationId, 20, "BTC", 0.25);
+                              "Unique client order ID: %s, System Order ID: %d, Symbol: %s, Quantity: %d",
+                              correlationId, SystemOrderId, Symbol, Quantity);
             } else {
                   return "Failed to send message. Error code: " + offerResult;
             }

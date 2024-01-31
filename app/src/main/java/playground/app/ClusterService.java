@@ -58,7 +58,6 @@ public final class ClusterService implements AutoCloseable {
 
         @Override
         public void onSessionOpen(final ClientSession session, final long timestamp) {
-            System.out.println("New  Client session opened " + session.id() + "\n");
             allSessions.add(session);
         }
 
@@ -73,7 +72,6 @@ public final class ClusterService implements AutoCloseable {
 
             messageCount++;
 
-            System.out.println(cluster.role() + " onSessionMessage " + session.id() + " count=" + messageCount + "\n");
             SbeDemuxer.dispatch(session, buffer, offset, length);
 
             final int id = buffer.getInt(offset);
@@ -120,7 +118,7 @@ public final class ClusterService implements AutoCloseable {
                 final int logSessionId,
                 final TimeUnit timeUnit,
                 final int appVersion) {
-            System.out.println("Chooosing new leader\n");
+
         }
 
         protected long serviceCorrelationId(final int correlationId) {
@@ -141,7 +139,7 @@ public final class ClusterService implements AutoCloseable {
         }
 
         public void onRoleChange(final Cluster.Role newRole) {
-            System.out.println("Service is selecting new role " + newRole + "\n");
+
         }
 
         public void onTerminate(final Cluster cluster) {
