@@ -29,7 +29,7 @@ public class ClusterClient implements AutoCloseable {
                 .dirDeleteOnStart(true)
                 .dirDeleteOnShutdown(true));
 
-        List<String> hostnames = Arrays.asList("192.168.18.18");
+        List<String> hostnames = Arrays.asList("localhost");
         final String ingressEndpoints = ClusterConfig.ingressEndpoints(hostnames, 9000, 2);
         // hostnames, 9000, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
         clientEgresslistener = new Egresslistener();
@@ -60,6 +60,15 @@ public class ClusterClient implements AutoCloseable {
                     Thread.currentThread().interrupt();
                     System.out.println("Client is closed this is from client \n");
                 }
+
+                final var reader = aeronCluster.context().aeron().countersReader();
+
+                reader.forEach(
+                        (counterId, typeId, keyBuffer, label) -> {
+                            // System.out
+                            // .println("Counter ID: " + counterId + ", Type ID: " + typeId + ", Label: " +
+                            // label);
+                        });
             }
         });
 

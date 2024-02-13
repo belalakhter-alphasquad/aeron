@@ -60,6 +60,7 @@ public final class ClusterService implements AutoCloseable {
             allSessions.add(session);
         }
 
+        /* */
         @Override
         public void onSessionMessage(
                 final ClientSession session,
@@ -173,8 +174,8 @@ public final class ClusterService implements AutoCloseable {
     }
 
     public void RunClusterNode(int Node) {
-        List<String> Single = List.of("192.168.18.18");
-        List<String> ipAddresses = List.of("192.168.18.18", "192.168.18.19", "192.168.18.20");
+        List<String> Single = List.of("localhost");
+        List<String> ipAddresses = List.of("localhost");
         try {
             File baseDir = getBaseDir(Node);
             if (baseDir.exists()) {
