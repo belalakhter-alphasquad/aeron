@@ -27,11 +27,11 @@ public class Enviromental {
         } catch (final Exception e) {
             // ignore
         }
-        return "192.168.18.18";
+        return "localhost";
     }
 
     public static String tryGetClusterHostsFromEnv() {
-        String clusterAddresses = "192.168.18.18";
+        String clusterAddresses = "localhost";
         /*
          * String clusterAddresses = System.getenv("CLUSTER_ADDRESSES");
          * if (null == clusterAddresses || clusterAddresses.isEmpty()) {

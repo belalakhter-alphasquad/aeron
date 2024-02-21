@@ -15,14 +15,19 @@ import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
 
 import io.aeron.samples.cluster.ClusterConfig;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.CloseHelper;
 import java.io.File;
+import java.nio.ByteBuffer;
 
 import org.agrona.DirectBuffer;
 import org.agrona.ErrorHandler;
 import org.agrona.ExpandableArrayBuffer;
 import playground.app.DemoResponseEncoder;
+import playground.app.OrderBook;
 import playground.app.MessageHeaderEncoder;
+import playground.app.OrderMessageDecoder;
+import playground.app.OrderMessageEncoder;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.status.AtomicCounter;
@@ -48,12 +53,16 @@ public final class ClusterService implements AutoCloseable {
 
     private final static MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
     private final static DemoResponseEncoder DemoResponseEncoderCommand = new DemoResponseEncoder();
+    private static final OrderMessageDecoder orderMessageDecoder = new OrderMessageDecoder();
+    private final static MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
+    private final static OrderMessageEncoder OrderMessageEncoderCommand = new OrderMessageEncoder();
+    static int clusterServiceCount = 0;
 
     static class Service implements ClusteredService {
         protected Cluster cluster;
         protected IdleStrategy idleStrategy;
         private int messageCount = 0;
-        private final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer();
+        private final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer(2048 * 2048);
 
         @Override
         public void onSessionOpen(final ClientSession session, final long timestamp) {
@@ -72,22 +81,39 @@ public final class ClusterService implements AutoCloseable {
 
             messageCount++;
 
-            SbeDemuxer.dispatch(session, buffer, offset, length);
+            messageHeaderDecoder.wrap(buffer, offset);
+            switch (messageHeaderDecoder.templateId()) {
 
+                case OrderMessageDecoder.TEMPLATE_ID -> {
+                    orderMessageDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+                    String uniqueId = orderMessageDecoder.uniqueClientOrderId();
+                    Long OrderId = orderMessageDecoder.systemOrderId();
+                    CryptoCurrencySymbol asset = orderMessageDecoder.symbol();
+                    String symbol = asset.toString();
+                    Long size = orderMessageDecoder.quantity();
+                    final UnsafeBuffer sendBuffer = new UnsafeBuffer(ByteBuffer.allocate(1024 * 1024 * 64));
+                    OrderMessageEncoderCommand.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
+                    OrderMessageEncoderCommand.uniqueClientOrderId(uniqueId);
+                    OrderMessageEncoderCommand.systemOrderId(OrderId);
+                    OrderMessageEncoderCommand.symbol(CryptoCurrencySymbol.valueOf(symbol));
+                    OrderMessageEncoderCommand.quantity(size);
+                    echoMessage(session, sendBuffer, 0,
+                            messageHeaderEncoder.encodedLength() + OrderMessageEncoderCommand.encodedLength());
+
+                    System.out.println("message recieved on cluster service" + uniqueId);
+
+                }
+
+                default -> System.out.println("Unknown message received from gateway");
+            }
             final int id = buffer.getInt(offset);
             if (TIMER_ID == id) {
                 idleStrategy.reset();
                 while (!cluster.scheduleTimer(serviceCorrelationId(1), cluster.time() + 1_000)) {
                     idleStrategy.idle();
                 }
-            } else {
-                final MutableDirectBuffer sendBuffer = new ExpandableDirectByteBuffer(1024);
-                DemoResponseEncoderCommand.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
-                DemoResponseEncoderCommand.demoMessage("Demo Response");
-
-                echoMessage(session, sendBuffer, 0,
-                        messageHeaderEncoder.encodedLength() + DemoResponseEncoderCommand.encodedLength());
             }
+
         }
 
         public void onTimerEvent(final long correlationId, final long timestamp) {

@@ -50,18 +50,45 @@ public class Gateway {
             InputStream inputStream = exchange.getRequestBody();
             String requestBody = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             JsonObject json = JsonParser.parseString(requestBody).getAsJsonObject();
-            long SystemOrderIdget = json.get("OrderId").getAsLong();
-            String Symbolget = json.get("Symbol").getAsString();
-            long Quantityget = json.get("Quantity").getAsLong();
+            long systemOrderIdGet = json.get("OrderId").getAsLong();
+            String symbolGet = json.get("Symbol").getAsString();
+            long quantityGet = json.get("Quantity").getAsLong();
             SendMessages sendMessages = new SendMessages(clusterClient.getAeronCluster());
-            String messageSent = sendMessages.sendCustomMessage(SystemOrderIdget, Symbolget, Quantityget);
-            System.out.println("Custom message sent: " + messageSent + "\n");
-            String response = "Your Order is Placed";
-            exchange.sendResponseHeaders(200, response.length());
+            String messageSent = sendMessages.sendCustomMessage(systemOrderIdGet, symbolGet, quantityGet);
+            System.out.println("From gateway: " + messageSent + "\n");
 
+            long startTime = System.currentTimeMillis();
+            long timeout = 2000;
+            OrderBook.OrderDetails orderDetails = null;
+            while (System.currentTimeMillis() - startTime < timeout) {
+                orderDetails = OrderBook.getOrder(messageSent);
+                if (orderDetails != null) {
+
+                    break;
+                }
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            String response;
+            int statusCode;
+            if (orderDetails != null) {
+                response = "Order details: " + orderDetails.getOrderId() + ", " +
+                        orderDetails.getSymbol() + ", " + orderDetails.getSize();
+                statusCode = 200;
+            } else {
+                response = "Order not found within the timeout period";
+                statusCode = 400;
+            }
+            exchange.sendResponseHeaders(statusCode, response.length());
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());
             }
         }
+
     }
 }

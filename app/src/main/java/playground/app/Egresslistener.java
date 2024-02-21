@@ -5,12 +5,21 @@ import org.agrona.DirectBuffer;
 import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.EventCode;
 import io.aeron.logbuffer.Header;
-import playground.app.MessageHeaderDecoder;
-import playground.app.DemoResponseDecoder;
+import playground.app.DemoResponseEncoder;
+import playground.app.OrderBook;
+import playground.app.MessageHeaderEncoder;
+import playground.app.OrderMessageDecoder;
+import playground.app.OrderMessageEncoder;
 
 public class Egresslistener implements EgressListener {
-    private static final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
+
     private final static DemoResponseDecoder DemoResponseDecoderCommand = new DemoResponseDecoder();
+    private final static MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
+    private final static DemoResponseEncoder DemoResponseEncoderCommand = new DemoResponseEncoder();
+    private static final OrderMessageDecoder orderMessageDecoder = new OrderMessageDecoder();
+    private final static MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
+    private final static OrderMessageEncoder OrderMessageEncoderCommand = new OrderMessageEncoder();
+    int egressListenerCount = 0;
 
     public void EgressListener() {
         System.out.println("Egress listener constructor!");
@@ -31,18 +40,23 @@ public class Egresslistener implements EgressListener {
         messageHeaderDecoder.wrap(buffer, offset);
 
         switch (messageHeaderDecoder.templateId()) {
-            case DemoResponseDecoder.TEMPLATE_ID -> demoResponseDecoderCommand(buffer, offset);
+            case OrderMessageDecoder.TEMPLATE_ID -> demoResponseDecoderCommand(buffer, offset);
             default -> System.out.println("unknown message type: " + messageHeaderDecoder.templateId());
         }
     }
 
     private void demoResponseDecoderCommand(final DirectBuffer buffer, final int offset) {
-        DemoResponseDecoderCommand.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-
-        final String demoMessage = DemoResponseDecoderCommand.demoMessage();
+        orderMessageDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+        String uniqueId = orderMessageDecoder.uniqueClientOrderId();
+        Long OrderId = orderMessageDecoder.systemOrderId();
+        CryptoCurrencySymbol asset = orderMessageDecoder.symbol();
+        String symbol = asset.toString();
+        Long size = orderMessageDecoder.quantity();
+        OrderBook.OrderDetails details = new OrderBook.OrderDetails(OrderId, symbol, size);
+        OrderBook.storeOrder(uniqueId, details);
 
         System.out.println(
-                "\n Quick Response Egress listerner recieved: " + demoMessage + "\n");
+                "\n Quick Response Egress listerner recieved: " + uniqueId + "\n");
     }
 
     @Override

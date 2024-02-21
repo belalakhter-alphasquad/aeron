@@ -4,15 +4,18 @@ import io.aeron.cluster.client.AeronCluster;
 import playground.app.OrderMessageEncoder;
 import playground.app.MessageHeaderEncoder;
 
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import org.agrona.ExpandableDirectByteBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 
 public class SendMessages {
+      int clusterClientCount = 0;
       private final AeronCluster aeronCluster;
       private final OrderMessageEncoder OrderMessageEncoderCommand = new OrderMessageEncoder();
-      private final MutableDirectBuffer sendBuffer = new ExpandableDirectByteBuffer(1024);
+      private UnsafeBuffer sendBuffer = new UnsafeBuffer(ByteBuffer.allocate(1024 * 1024 * 64));
       private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
 
       public SendMessages(AeronCluster aeronCluster) {
@@ -20,6 +23,7 @@ public class SendMessages {
       }
 
       public String sendCustomMessage(long SystemOrderId, String Symbol, long Quantity) {
+
             final String correlationId = UUID.randomUUID().toString();
             OrderMessageEncoderCommand.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
             OrderMessageEncoderCommand.uniqueClientOrderId(correlationId);
@@ -30,9 +34,8 @@ public class SendMessages {
                         OrderMessageEncoderCommand.encodedLength());
 
             if (offerResult >= 0L) {
-                  return String.format(
-                              "Unique client order ID: %s, System Order ID: %d, Symbol: %s, Quantity: %d",
-                              correlationId, SystemOrderId, Symbol, Quantity);
+                  return correlationId;
+
             } else {
                   return "Failed to send message. Error code: " + offerResult;
             }

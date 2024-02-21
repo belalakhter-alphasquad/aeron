@@ -38,7 +38,7 @@ public class ClusterClient implements AutoCloseable {
                         .egressListener(clientEgresslistener)
                         .egressChannel("aeron:udp?endpoint=" + userhost + ":" + port)
                         .aeronDirectoryName(mediaDriver.aeronDirectoryName())
-                        .ingressChannel("aeron:udp?term-length=64k")
+                        .ingressChannel("aeron:udp?term-length=1024k")
                         .ingressEndpoints(ingressEndpoints));
         makeClusterAlive();
         System.out.println("Cluster connection succeeded!" + " Leader is node " + aeronCluster.leaderMemberId() + "\n");
